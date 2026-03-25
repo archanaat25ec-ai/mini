@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header>
+    <h1>Dashboard</h1>
+    <a class="button" href="{{ url_for('index') }}">Home</a>
+    <a class="button" href="{{ url_for('create_account') }}">Create Account</a>
+</header>
+<div class="container">
+    <table>
+        <tr>
+            <th>Account Number</th>
+            <th>Name</th>
+            <th>Balance</th>
+            <th>Actions</th>
+        </tr>
+        {% for account in accounts %}
+        <tr>
+            <td>{{ account.account_number }}</td>
+            <td>{{ account.name }}</td>
+            <td>{{ account.balance }}</td>
+            <td>
+                <a class="button" href="{{ url_for('view_account', acc_num=account.account_number) }}">View</a>
+                <a class="button" href="{{ url_for('deposit', acc_num=account.account_number) }}">Deposit</a>
+                <a class="button" href="{{ url_for('withdraw', acc_num=account.account_number) }}">Withdraw</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+</body>
+</html>

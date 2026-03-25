@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>View Account</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header>
+    <h1>Account Details</h1>
+    <a class="button" href="{{ url_for('dashboard') }}">Dashboard</a>
+    <a class="button" href="{{ url_for('index') }}">Home</a>
+</header>
+<div class="container">
+    {% if account %}
+        <p><strong>Account Number:</strong> {{ account.account_number }}</p>
+        <p><strong>Name:</strong> {{ account.name }}</p>
+        <p><strong>Balance:</strong> {{ account.balance }}</p>
+        <a class="button" href="{{ url_for('deposit', acc_num=account.account_number) }}">Deposit</a>
+        <a class="button" href="{{ url_for('withdraw', acc_num=account.account_number) }}">Withdraw</a>
+    {% else %}
+        <p>Account not found.</p>
+    {% endif %}
+</div>
+</body>
+</html>

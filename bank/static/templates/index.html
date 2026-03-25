@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bank Management System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header>
+    <h1>Bank Management System</h1>
+</header>
+
+<div class="container">
+    <h2>Dashboard</h2>
+    <p>Total Accounts: {{ total_accounts }}</p>
+    <p>Total Balance: ${{ total_balance }}</p>
+
+    <a href="{{ url_for('create_account') }}">Create Account</a> |
+    <a href="{{ url_for('transfer') }}">Transfer Money</a> |
+    <a href="{{ url_for('search_account') }}">Search Account</a> |
+    <a href="{{ url_for('transactions') }}">View All Transactions</a>
+</div>
+</body>
+</html>

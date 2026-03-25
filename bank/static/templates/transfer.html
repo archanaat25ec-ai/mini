@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Transfer Money</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header>
+    <h1>Transfer Money</h1>
+    <a class="button" href="{{ url_for('dashboard') }}">Dashboard</a>
+    <a class="button" href="{{ url_for('index') }}">Home</a>
+</header>
+<div class="container">
+    <form method="POST">
+        <label>From Account Number:</label>
+        <select name="from_acc" required>
+            {% for acc in accounts %}
+                <option value="{{ acc.account_number }}">{{ acc.account_number }} - {{ acc.name }}</option>
+            {% endfor %}
+        </select><br><br>
+
+        <label>To Account Number:</label>
+        <select name="to_acc" required>
+            {% for acc in accounts %}
+                <option value="{{ acc.account_number }}">{{ acc.account_number }} - {{ acc.name }}</option>
+            {% endfor %}
+        </select><br><br>
+
+        <label>Amount:</label>
+        <input type="number" name="amount" step="0.01" required><br><br>
+
+        <button type="submit">Transfer</button>
+    </form>
+</div>
+</body>
+</html>
