@@ -2,19 +2,17 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 import json
 import os
 
-DATA_FILE = "database.json"
+DATA_FILE = "data.json"
 
 def load_data():
-    try:
-        with open(DATA_FILE, "r") as file:
-            return json.load(file)
-    except:
+    if not os.path.exists(DATA_FILE):
         return {"accounts": [], "transactions": []}
-
+    with open(DATA_FILE, "r") as f:
+        return json.load(f)
 
 def save_data(data):
-    with open(DATA_FILE, "w") as file:
-        json.dump(data, file, indent=4)
+    with open(DATA_FILE, "w") as f:
+        json.dump(data, f)
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"  # Needed for flash messages
@@ -54,19 +52,25 @@ def dashboard():
                            total_balance=total_balance)
 
 # Create Account page
-@app.route('/create', methods=['GET', 'POST'])
+@app.route("/create_account", methods=["GET", "POST"])
 def create_account():
-    if request.method == 'POST':
-        data = read_db()
+    if request.method == "POST":
+        name = request.form["name"]
+        balance = float(request.form["balance"])
+
+        data = load_data()
+
         account = {
-            "id": len(data["accounts"]) + 1,
-            "name": request.form['name'],
-            "balance": float(request.form['balance'])
+            "account_number": len(data["accounts"]) + 1,
+            "name": name,
+            "balance": balance
         }
+
         data["accounts"].append(account)
-        write_db(data)
-        flash("Account created successfully!", "success")
-        return redirect(url_for('index'))
+        save_data(data)
+
+        return redirect(url_for("index"))
+
     return render_template("create_account.html")
 
 # Transfer Money page
@@ -148,4 +152,4 @@ def withdraw():
     return render_template("withdraw.html", accounts=data["accounts"])
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=10000, debug=True)
