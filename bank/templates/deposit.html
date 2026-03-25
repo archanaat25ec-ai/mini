@@ -2,20 +2,20 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Withdraw</title>
+    <title>Deposit</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 <header>
-    <h1>Withdraw Money</h1>
+    <h1>Deposit Money</h1>
     <a class="button" href="{{ url_for('dashboard') }}">Dashboard</a>
-    <a class="button" href="{{ url_for('view_account', acc_num=account.account_number) }}">Back</a>
+    <a href="{{ url_for('index') }}">Back</a>
 </header>
 <div class="container">
     <form method="POST">
-        <label>Amount to withdraw:</label>
+        <label>Amount to deposit:</label>
         <input type="number" name="amount" step="0.01" required><br><br>
-        <button type="submit">Withdraw</button>
+        <button type="submit">Deposit</button>
     </form>
 </div>
 </body>

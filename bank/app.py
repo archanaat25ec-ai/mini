@@ -2,138 +2,150 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 import json
 import os
 
-app = Flask(__name__)
-app.secret_key = "bank_secret"
+DATA_FILE = "database.json"
 
+def load_data():
+    try:
+        with open(DATA_FILE, "r") as file:
+            return json.load(file)
+    except:
+        return {"accounts": [], "transactions": []}
+
+
+def save_data(data):
+    with open(DATA_FILE, "w") as file:
+        json.dump(data, file, indent=4)
+
+app = Flask(__name__)
+app.secret_key = "your_secret_key"  # Needed for flash messages
+
+# Path to the JSON database
 DB_FILE = "database.json"
 
-# Initialize database if not exists
-if not os.path.exists(DB_FILE):
-    with open(DB_FILE, "w") as f:
-        json.dump({"accounts": {}, "transactions": []}, f)
+# Helper function to read database
+def read_db():
+    if os.path.exists(DB_FILE):
+        with open(DB_FILE, "r") as f:
+            return json.load(f)
+    else:
+        return {"accounts": []}
 
-def load_db():
-    with open(DB_FILE, "r") as f:
-        return json.load(f)
-
-def save_db(data):
+# Helper function to write database
+def write_db(data):
     with open(DB_FILE, "w") as f:
         json.dump(data, f, indent=4)
 
-# Home Page
-@app.route("/")
+# Home page / Dashboard
+@app.route('/')
 def index():
-    db = load_db()
-    total_accounts = len(db["accounts"])
-    total_balance = sum([acc["balance"] for acc in db["accounts"].values()])
+    data = read_db()
+    total_accounts = len(data["accounts"])
+    total_balance = sum(acc.get("balance", 0) for acc in data["accounts"])
     return render_template("index.html", total_accounts=total_accounts, total_balance=total_balance)
 
-# Create Account
-@app.route("/create", methods=["GET", "POST"])
+@app.route('/dashboard')
+def dashboard():
+    data = load_data()
+    total_accounts = len(data.get('accounts', []))
+    total_balance = sum(acc.get('balance', 0) for acc in data.get('accounts', []))
+
+    return render_template('dashboard.html',
+                           total_accounts=total_accounts,
+                           total_balance=total_balance)
+
+# Create Account page
+@app.route('/create', methods=['GET', 'POST'])
 def create_account():
-    if request.method == "POST":
-        db = load_db()
-        acc_no = request.form["acc_no"]
-        name = request.form["name"]
-        balance = float(request.form["balance"])
-        if acc_no in db["accounts"]:
-            flash("Account already exists!", "error")
-        else:
-            db["accounts"][acc_no] = {"name": name, "balance": balance}
-            db["transactions"].append({"acc_no": acc_no, "type": "Create", "amount": balance})
-            save_db(db)
-            flash("Account created successfully!", "success")
-        return redirect(url_for("index"))
+    if request.method == 'POST':
+        data = read_db()
+        account = {
+            "id": len(data["accounts"]) + 1,
+            "name": request.form['name'],
+            "balance": float(request.form['balance'])
+        }
+        data["accounts"].append(account)
+        write_db(data)
+        flash("Account created successfully!", "success")
+        return redirect(url_for('index'))
     return render_template("create_account.html")
 
-# View Account
-@app.route("/view/<acc_no>")
-def view_account(acc_no):
-    db = load_db()
-    account = db["accounts"].get(acc_no)
-    if not account:
-        flash("Account not found!", "error")
-        return redirect(url_for("index"))
-    transactions = [t for t in db["transactions"] if t["acc_no"] == acc_no]
-    return render_template("view_account.html", acc_no=acc_no, account=account, transactions=transactions)
+# Transfer Money page
+@app.route('/transfer', methods=['GET', 'POST'])
+def transfer_money():
+    data = read_db()
+    if request.method == 'POST':
+        from_id = int(request.form['from_id'])
+        to_id = int(request.form['to_id'])
+        amount = float(request.form['amount'])
 
-# Deposit
-@app.route("/deposit/<acc_no>", methods=["GET", "POST"])
-def deposit(acc_no):
-    db = load_db()
-    account = db["accounts"].get(acc_no)
-    if not account:
-        flash("Account not found!", "error")
-        return redirect(url_for("index"))
-    if request.method == "POST":
-        amount = float(request.form["amount"])
-        account["balance"] += amount
-        db["transactions"].append({"acc_no": acc_no, "type": "Deposit", "amount": amount})
-        save_db(db)
-        flash("Deposit successful!", "success")
-        return redirect(url_for("view_account", acc_no=acc_no))
-    return render_template("deposit.html", acc_no=acc_no, account=account)
-
-# Withdraw
-@app.route("/withdraw/<acc_no>", methods=["GET", "POST"])
-def withdraw(acc_no):
-    db = load_db()
-    account = db["accounts"].get(acc_no)
-    if not account:
-        flash("Account not found!", "error")
-        return redirect(url_for("index"))
-    if request.method == "POST":
-        amount = float(request.form["amount"])
-        if amount > account["balance"]:
-            flash("Insufficient balance!", "error")
-        else:
-            account["balance"] -= amount
-            db["transactions"].append({"acc_no": acc_no, "type": "Withdraw", "amount": amount})
-            save_db(db)
-            flash("Withdrawal successful!", "success")
-        return redirect(url_for("view_account", acc_no=acc_no))
-    return render_template("withdraw.html", acc_no=acc_no, account=account)
-
-# Transfer
-@app.route("/transfer", methods=["GET", "POST"])
-def transfer():
-    db = load_db()
-    if request.method == "POST":
-        from_acc = request.form["from_acc"]
-        to_acc = request.form["to_acc"]
-        amount = float(request.form["amount"])
-        if from_acc not in db["accounts"] or to_acc not in db["accounts"]:
-            flash("One or both accounts not found!", "error")
-        elif amount > db["accounts"][from_acc]["balance"]:
-            flash("Insufficient balance in source account!", "error")
-        else:
-            db["accounts"][from_acc]["balance"] -= amount
-            db["accounts"][to_acc]["balance"] += amount
-            db["transactions"].append({"acc_no": from_acc, "type": f"Transfer to {to_acc}", "amount": amount})
-            db["transactions"].append({"acc_no": to_acc, "type": f"Transfer from {from_acc}", "amount": amount})
-            save_db(db)
+        accounts = {acc["id"]: acc for acc in data["accounts"]}
+        if from_id in accounts and to_id in accounts and accounts[from_id]["balance"] >= amount:
+            accounts[from_id]["balance"] -= amount
+            accounts[to_id]["balance"] += amount
+            write_db(data)
             flash("Transfer successful!", "success")
-        return redirect(url_for("index"))
-    return render_template("transfer.html")
-
-# Search Account
-@app.route("/search", methods=["GET", "POST"])
-def search_account():
-    db = load_db()
-    if request.method == "POST":
-        acc_no = request.form["acc_no"]
-        if acc_no in db["accounts"]:
-            return redirect(url_for("view_account", acc_no=acc_no))
         else:
-            flash("Account not found!", "error")
-            return redirect(url_for("search_account"))
-    return render_template("search_account.html")
+            flash("Invalid transfer!", "error")
+        return redirect(url_for('transfer_money'))
 
-# View all transactions
-@app.route("/transactions")
+    return render_template("transfer.html", accounts=data["accounts"])
+
+# View Account page
+@app.route('/view')
+def view_account():
+    data = read_db()
+    return render_template("view_account.html", accounts=data["accounts"])
+
+# Deposit page
+@app.route('/deposit', methods=['GET', 'POST'])
+def deposit():
+    data = read_db()
+    if request.method == 'POST':
+        account_id = int(request.form['account_id'])
+        amount = float(request.form['amount'])
+        for acc in data["accounts"]:
+            if acc["id"] == account_id:
+                acc["balance"] += amount
+                write_db(data)
+                flash("Deposit successful!", "success")
+                break
+        return redirect(url_for('deposit'))
+    return render_template("deposit.html", accounts=data["accounts"])
+
+@app.route('/transactions')
 def transactions():
-    db = load_db()
-    return render_template("transactions.html", transactions=db["transactions"])
+    data = load_data()
+    transactions = data.get('transactions', [])
+    return render_template('transactions.html', transactions=transactions)
+
+@app.route('/search', methods=['GET', 'POST'])
+def search_account():
+    data = load_data()
+    account = None
+
+    if request.method == 'POST':
+        acc_no = request.form['account_number']
+        account = next((acc for acc in data['accounts'] if acc['account_number'] == acc_no), None)
+
+    return render_template('search_account.html', account=account)
+
+# Withdraw page
+@app.route('/withdraw', methods=['GET', 'POST'])
+def withdraw():
+    data = read_db()
+    if request.method == 'POST':
+        account_id = int(request.form['account_id'])
+        amount = float(request.form['amount'])
+        for acc in data["accounts"]:
+            if acc["id"] == account_id and acc["balance"] >= amount:
+                acc["balance"] -= amount
+                write_db(data)
+                flash("Withdrawal successful!", "success")
+                break
+        else:
+            flash("Insufficient balance!", "error")
+        return redirect(url_for('withdraw'))
+    return render_template("withdraw.html", accounts=data["accounts"])
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)

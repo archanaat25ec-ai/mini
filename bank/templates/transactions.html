@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>All Transactions</title>
+</head>
+<body>
+    <h2>All Transactions</h2>
+
+    {% if transactions %}
+        <table border="1">
+            <tr>
+                <th>Type</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Amount</th>
+            </tr>
+
+            {% for t in transactions %}
+            <tr>
+                <td>{{ t.type }}</td>
+                <td>{{ t.from_account }}</td>
+                <td>{{ t.to_account }}</td>
+                <td>₹{{ t.amount }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No transactions found</p>
+    {% endif %}
+
+    <br>
+    <a href="{{ url_for('index') }}">Back</a>
+</body>
+</html>

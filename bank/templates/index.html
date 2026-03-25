@@ -14,10 +14,14 @@
     <p>Total Accounts: {{ total_accounts }}</p>
     <p>Total Balance: ${{ total_balance }}</p>
 
+    <a href="{{ url_for('index') }}">Home</a> |
     <a href="{{ url_for('create_account') }}">Create Account</a> |
-    <a href="{{ url_for('transfer') }}">Transfer Money</a> |
+    <a href="{{ url_for('transfer_money') }}">Transfer Money</a>|
     <a href="{{ url_for('search_account') }}">Search Account</a> |
     <a href="{{ url_for('transactions') }}">View All Transactions</a>
+    <a href="{{ url_for('deposit') }}">Deposit</a> |
+    <a href="{{ url_for('withdraw') }}">Withdraw</a>
+
 </div>
 </body>
 </html>

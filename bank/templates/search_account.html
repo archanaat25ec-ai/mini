@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search Account</title>
+</head>
+<body>
+    <h2>Search Account</h2>
+
+    <form method="POST">
+        <input type="text" name="account_number" placeholder="Enter Account Number" required>
+        <button type="submit">Search</button>
+    </form>
+
+    {% if account %}
+        <h3>Account Found:</h3>
+        <p>Name: {{ account.name }}</p>
+        <p>Balance: ₹{{ account.balance }}</p>
+    {% elif account is not none %}
+        <p>Account not found</p>
+    {% endif %}
+
+    <br>
+    <a href="{{ url_for('index') }}">Back</a>
+</body>
+</html>
